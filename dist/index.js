@@ -153,6 +153,14 @@ export class HashgraphNames {
             throw new Error('Failed to get SLD Info');
         }
     };
+    static testFunc = (domain) => {
+        // eslint-disable-next-line no-debugger
+        debugger;
+        // eslint-disable-next-line no-console
+        console.log('THIS IS A TEST');
+        // eslint-disable-next-line no-console
+        console.log(`domain: ${domain}`);
+    };
     /**
    * @description Get the SubdomainInfo for a given domain
    * @param domain: {string} The domain to query
