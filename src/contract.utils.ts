@@ -162,6 +162,35 @@ export const queryContractFunc = async (
 };
 
 /**
+ * @description Wrapper around Hedera SDK ContractCallQuery
+ * @param contractId: {ContractId} The contract on which to to call a function
+ * @param funcName: {string} The function name of which to call on the contract
+ * @param funcParams: {ContractFunctionParameters} The parameters of the function to be called
+ * @param gas: {number} (optional) The max gas to use for the call
+ * @returns {Uint8Array}
+ */
+export const queryContractFuncTx = (
+  contractId: ContractId,
+  funcName: string,
+  funcParams: ContractFunctionParameters = new ContractFunctionParameters(),
+  gas = MAX_GAS,
+): Uint8Array => {
+  try {
+    const tx = new ContractCallQuery()
+      .setContractId(contractId)
+      .setFunction(funcName, funcParams)
+      .setGas(gas)
+      .setQueryPayment(new Hbar(1));
+
+    const txBytes = tx.toBytes();
+
+    return txBytes;
+  } catch (err) {
+    throw new Error('queryContractFuncTx failed');
+  }
+};
+
+/**
  * @description Retrieves the tld manager id
  * @returns {ContractInfo}
  */
@@ -218,6 +247,33 @@ export const callGetTLD = async (
     );
 
     return ContractId.fromSolidityAddress(result[0]);
+  } catch (err) {
+    throw new Error('Failed to call getTLD');
+  }
+};
+
+/**
+/**
+ * @description Simple wrapper around callContractFunc for the getTLD smart contract function
+ * @param tldHash: {Buffer} The hash of the TLD you wish to query
+ * @returns {Uint8Array}
+ */
+export const callGetTLDTx = (
+  tldHash: Buffer,
+): Uint8Array => {
+  try {
+    const tldManagerId = getTLDManagerId();
+
+    const params = new ContractFunctionParameters()
+      .addBytes32(tldHash);
+
+    const result = queryContractFuncTx(
+      tldManagerId,
+      'getTLD',
+      params,
+    );
+
+    return result;
   } catch (err) {
     throw new Error('Failed to call getTLD');
   }

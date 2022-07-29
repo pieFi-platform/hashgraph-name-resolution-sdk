@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Client, ContractFunctionParameters, ContractId, PrivateKey, TokenId } from '@hashgraph/sdk';
 import { ContractType, NameHash, NFTData, SLDInfo, SubdomainInfo } from './config/constants.config';
 /**
@@ -31,6 +30,15 @@ export declare const callContractFunc: (client: Client, contractId: ContractId, 
  */
 export declare const queryContractFunc: (client: Client, contractId: ContractId, contractType: ContractType, funcName: string, funcParams?: ContractFunctionParameters, gas?: number) => Promise<any>;
 /**
+ * @description Wrapper around Hedera SDK ContractCallQuery
+ * @param contractId: {ContractId} The contract on which to to call a function
+ * @param funcName: {string} The function name of which to call on the contract
+ * @param funcParams: {ContractFunctionParameters} The parameters of the function to be called
+ * @param gas: {number} (optional) The max gas to use for the call
+ * @returns {Uint8Array}
+ */
+export declare const queryContractFuncTx: (contractId: ContractId, funcName: string, funcParams?: ContractFunctionParameters, gas?: number) => Uint8Array;
+/**
  * @description Retrieves the tld manager id
  * @returns {ContractInfo}
  */
@@ -49,6 +57,13 @@ export declare const callGetNumNodes: (client: Client, tldNodeId: ContractId) =>
  * @returns {Promise<ContractId>}
  */
 export declare const callGetTLD: (client: Client, tldHash: Buffer) => Promise<ContractId>;
+/**
+/**
+ * @description Simple wrapper around callContractFunc for the getTLD smart contract function
+ * @param tldHash: {Buffer} The hash of the TLD you wish to query
+ * @returns {Uint8Array}
+ */
+export declare const callGetTLDTx: (tldHash: Buffer) => Uint8Array;
 /**
  * @description Simple wrapper around callContractFunc for the getSLDNode smart contract function
  * @param client: {Client} The client to use for the transaction

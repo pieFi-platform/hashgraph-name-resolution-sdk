@@ -1,7 +1,7 @@
 import { AccountId, Client, ContractId, Hbar, NftId, PrivateKey, Status, TokenId, TokenNftInfoQuery, Transaction, TransferTransaction, } from '@hashgraph/sdk';
 import keccak256 from 'keccak256';
 import { CONFIRMATION_STATUS, NULL_CONTRACT_ID, TOKEN_ID, } from './config/constants.config';
-import { callDumpNames, callGetNumNodes, callGetSerial, callGetSLDInfo, callGetSLDNode, callGetSubdomainInfo, callGetTLD, queryNFTsFromRestAPI, } from './contract.utils';
+import { callDumpNames, callGetNumNodes, callGetSerial, callGetSLDInfo, callGetSLDNode, callGetSubdomainInfo, callGetTLD, callGetTLDTx, queryNFTsFromRestAPI, } from './contract.utils';
 export class HashgraphNames {
     operatorId;
     operatorKey;
@@ -153,13 +153,15 @@ export class HashgraphNames {
             throw new Error('Failed to get SLD Info');
         }
     };
-    static testFunc = (domain) => {
-        // eslint-disable-next-line no-debugger
-        debugger;
+    static getTLDTx = (domain) => {
         // eslint-disable-next-line no-console
         console.log('THIS IS A TEST');
+        // eslint-disable-next-line no-debugger
+        debugger;
+        const nameHash = HashgraphNames.generateNameHash(domain);
         // eslint-disable-next-line no-console
-        console.log(`domain: ${domain}`);
+        console.log(`domain: ${nameHash.domain}`);
+        return callGetTLDTx(nameHash.tldHash);
     };
     /**
    * @description Get the SubdomainInfo for a given domain

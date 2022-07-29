@@ -32,6 +32,7 @@ import {
   callGetSLDNode,
   callGetSubdomainInfo,
   callGetTLD,
+  callGetTLDTx,
   queryNFTsFromRestAPI,
 } from './contract.utils';
 
@@ -213,13 +214,17 @@ export class HashgraphNames {
     }
   };
 
-  static testFunc = (domain: string) => {
-    // eslint-disable-next-line no-debugger
-    debugger;
+  static getTLDTx = (domain: string): Uint8Array => {
     // eslint-disable-next-line no-console
     console.log('THIS IS A TEST');
+    // eslint-disable-next-line no-debugger
+    debugger;
+
+    const nameHash = HashgraphNames.generateNameHash(domain);
     // eslint-disable-next-line no-console
-    console.log(`domain: ${domain}`);
+    console.log(`domain: ${nameHash.domain}`);
+
+    return callGetTLDTx(nameHash.tldHash);
   };
 
   /**

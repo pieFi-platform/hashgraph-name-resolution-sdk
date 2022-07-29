@@ -42,7 +42,7 @@ export declare class HashgraphNames {
    * @returns {Promise<SLDInfo>}
    */
     getSLDInfo: (domain: string) => Promise<SLDInfo>;
-    static testFunc: (domain: string) => void;
+    static getTLDTx: (domain: string) => Uint8Array;
     /**
    * @description Get the SubdomainInfo for a given domain
    * @param domain: {string} The domain to query
