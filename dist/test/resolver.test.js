@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = require("..");
-jest.setTimeout(20 * 1000);
+jest.setTimeout(60 * 1000);
 test('.cream name resolves to an address', async () => {
     const resolver = new __1.Resolver('hedera_main');
     resolver.init();

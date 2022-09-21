@@ -1,6 +1,6 @@
 import { Resolver } from "..";
 
-jest.setTimeout(20 * 1000);
+jest.setTimeout(60 * 1000);
 test('.cream name resolves to an address', async () => {
   const resolver = new Resolver('hedera_main');
   resolver.init();

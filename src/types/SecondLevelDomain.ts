@@ -10,4 +10,5 @@ export interface SecondLevelDomain {
   providerData: {
     contractId: string;
   }
+  sequenceNumber?: number;
 }
