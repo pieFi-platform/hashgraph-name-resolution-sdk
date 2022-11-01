@@ -5,10 +5,20 @@ import { TopLevelDomain } from "./types/TopLevelDomain";
 export class MemoryCache implements ICache {
   tld: Map<string, TopLevelDomain>;
   slds: Map<string, Map<string, SecondLevelDomain>>;
+  nftIdToNameHash: Map<string, {
+    domain: string;
+    tldHash: string;
+    sldHash: string;
+  }>;
 
   constructor() {
     this.tld = new Map<string, TopLevelDomain>();
     this.slds = new Map<string, Map<string, SecondLevelDomain>>();
+    this.nftIdToNameHash = new Map<string, {
+      domain: string;
+      tldHash: string;
+      sldHash: string;
+    }>();
   }
 
   getTld(
@@ -19,6 +29,26 @@ export class MemoryCache implements ICache {
 
   getTlds(): Promise<TopLevelDomain[]> {
     return Promise.resolve(Array.from(this.tld.values()) || []);
+  }
+
+  async getTokenIds(): Promise<string[]> {
+    const tokenIds = new Set<string>();
+
+    // Grab tokenids from TLDs
+    const tlds = await this.getTlds();
+    tlds.forEach(tld => {
+      tokenIds.add(tld.tokenId);
+    });
+
+    // Grab tokenids from SLDs because the TLDs is not an exhaustive list of token ids
+    for (const sldMap of this.slds.values()) {
+      for (const sld of sldMap.values()) {
+        const tid = sld.nftId.split(':')[0];
+        tokenIds.add(tid);
+      }
+    }
+
+    return Array.from(tokenIds);
   }
 
   getSld(
@@ -32,6 +62,15 @@ export class MemoryCache implements ICache {
       }
     }
     return Promise.resolve(undefined);
+  }
+
+  getSldByNftId(nftId: string): Promise<SecondLevelDomain | undefined> {
+    const nameHash = this.nftIdToNameHash.get(nftId);
+    if (!nameHash) {
+      return Promise.resolve(undefined);
+    }
+
+    return this.getSld(nameHash.tldHash, nameHash.sldHash);
   }
 
   setTld(tldHash: string, tld: TopLevelDomain): Promise<void> {
@@ -48,6 +87,7 @@ export class MemoryCache implements ICache {
     } else {
       this.slds.set(tldHash, new Map([[sld.nameHash.sldHash, sld]]));
     }
+    this.nftIdToNameHash.set(sld.nftId, sld.nameHash);
     return Promise.resolve();
   }
 

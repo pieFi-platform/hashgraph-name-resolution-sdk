@@ -58,6 +58,19 @@ export class MirrorNode {
     return res.data as NFT;
   }
 
+  async getNFTsByAccountId(tokenId: string, accountId: string): Promise<NFT[]> {
+    const url = `${this.getBaseUrl()}/api/v1/accounts/${accountId}/nfts?token.id=${tokenId}&limit=100`;
+    let res = await this.sendGetRequest(url);
+    const nfts: NFT[] = res.data.nfts;
+    while (res.data.links.next) {
+      const nextUrl = `${this.getBaseUrl()}${res.data.links.next}`;
+      res = await this.sendGetRequest(nextUrl);
+      const nextNfts: NFT[] = res.data.nfts;
+      nfts.push(...nextNfts);
+    }
+    return nfts;
+  }
+
   // Private 
 
   private getBaseUrl() {

@@ -16,6 +16,7 @@ export declare class MirrorNode {
     authKey: string;
     constructor(networkType: NetworkType, authKey?: string);
     getNFT(tokenId: string, serial: string): Promise<NFT>;
+    getNFTsByAccountId(tokenId: string, accountId: string): Promise<NFT[]>;
     private getBaseUrl;
     private sendGetRequest;
 }
