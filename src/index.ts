@@ -1,3 +1,4 @@
+import { Resolution } from "@unstoppabledomains/resolution";
 import { hashDomain } from "./hashDomain";
 import { MemoryCache } from "./MemoryCache";
 import { MirrorNode, NetworkType } from "./mirrorNode";
@@ -37,8 +38,8 @@ export class Resolver {
       this.cache = cache;
     }
 
-    if (options) {
-      this._options = options;
+    if (this._options) {
+      this._options = this._options;
     }
   }
 
@@ -72,9 +73,18 @@ export class Resolver {
    * @returns {Promise<AccountId>}
    */
   public async resolveSLD(domain: string): Promise<string | undefined> {
+    const udResolution = new Resolution();
     const nameHash = hashDomain(domain);
     const sld = await this.getSecondLevelDomain(nameHash);
-    if (sld) {
+    if (await udResolution.isSupportedDomain(domain)) {
+      try {
+      const udResult = await udResolution.addr(domain, 'HBAR')
+      return udResult;
+      } catch (error) {
+        console.log(error);
+        return Promise.resolve(undefined);
+      }
+    } else if (sld) {
       const [tokenId, serial] = sld.nftId.split(":");
       const nft = await this.mirrorNode.getNFT(tokenId, serial);
       return nft.account_id;
@@ -237,8 +247,7 @@ export class Resolver {
     }
 
     throw new Error(
-      `SLD message for:[${
-        nameHash.domain
+      `SLD message for:[${nameHash.domain
       }] not found on topic:[${tld.topicId.toString()}]`
     );
   }

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Resolver = exports.MAIN_TLD_TOPIC_ID = exports.TEST_TLD_TOPIC_ID = void 0;
+const resolution_1 = require("@unstoppabledomains/resolution");
 const hashDomain_1 = require("./hashDomain");
 const MemoryCache_1 = require("./MemoryCache");
 const mirrorNode_1 = require("./mirrorNode");
@@ -8,7 +9,7 @@ const pollingTopicSubscriber_1 = require("./topicSubscriber/pollingTopicSubscrib
 exports.TEST_TLD_TOPIC_ID = "0.0.48097305";
 exports.MAIN_TLD_TOPIC_ID = "0.0.1234189";
 class Resolver {
-    constructor(networkType, authKey = "", cache, options) {
+    constructor(networkType, authKey = "", cache) {
         this._isCaughtUpWithTopic = new Map();
         this._subscriptions = [];
         this.isCaughtUpPromise = Promise.resolve();
@@ -19,8 +20,8 @@ class Resolver {
         else {
             this.cache = cache;
         }
-        if (options) {
-            this._options = options;
+        if (this._options) {
+            this._options = this._options;
         }
     }
     /**
@@ -49,9 +50,19 @@ class Resolver {
      * @returns {Promise<AccountId>}
      */
     async resolveSLD(domain) {
+        const udResolution = new resolution_1.Resolution();
         const nameHash = (0, hashDomain_1.hashDomain)(domain);
         const sld = await this.getSecondLevelDomain(nameHash);
-        if (sld) {
+        if (await udResolution.isSupportedDomain(domain)) {
+            try {
+                const udResult = await udResolution.addr(domain, 'HBAR');
+                return udResult;
+            }
+            catch (error) {
+                return Promise.resolve(undefined);
+            }
+        }
+        else if (sld) {
             const [tokenId, serial] = sld.nftId.split(":");
             const nft = await this.mirrorNode.getNFT(tokenId, serial);
             return nft.account_id;
