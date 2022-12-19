@@ -59,6 +59,7 @@ class Resolver {
                 return udResult;
             }
             catch (error) {
+                console.log(error);
                 return Promise.resolve(undefined);
             }
         }
