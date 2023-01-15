@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Resolver = exports.MAIN_TLD_TOPIC_ID = exports.TEST_TLD_TOPIC_ID = void 0;
-const resolution_1 = require("@unstoppabledomains/resolution");
+const resolution_1 = __importDefault(require("@unstoppabledomains/resolution"));
 const hashDomain_1 = require("./hashDomain");
 const MemoryCache_1 = require("./MemoryCache");
 const mirrorNode_1 = require("./mirrorNode");
@@ -28,6 +31,7 @@ class Resolver {
      * @description Initializes all topic subscriptions.
      */
     init() {
+        this._udResolver = new resolution_1.default();
         this.isCaughtUpPromise = this.getTopLevelDomains().then(async () => {
             const promises = [];
             await this.cache.getTlds().then((knownTlds) => {
@@ -50,12 +54,9 @@ class Resolver {
      * @returns {Promise<AccountId>}
      */
     async resolveSLD(domain) {
-        const udResolution = new resolution_1.Resolution();
-        const nameHash = (0, hashDomain_1.hashDomain)(domain);
-        const sld = await this.getSecondLevelDomain(nameHash);
-        if (await udResolution.isSupportedDomain(domain)) {
+        if (await this._udResolver.isSupportedDomain(domain)) {
             try {
-                const udResult = await udResolution.addr(domain, 'HBAR');
+                const udResult = await this._udResolver.addr(domain, 'HBAR');
                 return udResult;
             }
             catch (error) {
@@ -63,14 +64,14 @@ class Resolver {
                 return Promise.resolve(undefined);
             }
         }
-        else if (sld) {
+        const nameHash = (0, hashDomain_1.hashDomain)(domain);
+        const sld = await this.getSecondLevelDomain(nameHash);
+        if (sld) {
             const [tokenId, serial] = sld.nftId.split(":");
             const nft = await this.mirrorNode.getNFT(tokenId, serial);
             return nft.account_id;
         }
-        else {
-            return Promise.resolve(undefined);
-        }
+        return Promise.resolve(undefined);
     }
     async getAllDomainsForAccount(accountIdOrDomain) {
         let accountId = accountIdOrDomain;

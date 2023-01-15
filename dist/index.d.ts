@@ -9,6 +9,7 @@ export declare class Resolver {
     private _isCaughtUpWithTopic;
     private _subscriptions;
     private cache;
+    private _udResolver;
     isCaughtUpPromise: Promise<unknown>;
     constructor(networkType: NetworkType, authKey?: string, cache?: ICache);
     /**
