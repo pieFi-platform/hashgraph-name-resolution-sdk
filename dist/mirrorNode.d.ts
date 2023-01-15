@@ -1,5 +1,5 @@
 import { NFT } from './types/NFT';
-export declare type NetworkType = 'hedera_test' | 'hedera_main' | 'lworks_test' | 'lworks_main' | 'arkhia_test' | 'arkhia_main';
+export type NetworkType = 'hedera_test' | 'hedera_main' | 'lworks_test' | 'lworks_main' | 'arkhia_test' | 'arkhia_main';
 export declare enum NetworkBaseURL {
     'hedera_test' = "https://testnet.mirrornode.hedera.com",
     'hedera_main' = "https://mainnet-public.mirrornode.hedera.com",

@@ -12,7 +12,7 @@ const pollingTopicSubscriber_1 = require("./topicSubscriber/pollingTopicSubscrib
 exports.TEST_TLD_TOPIC_ID = "0.0.48097305";
 exports.MAIN_TLD_TOPIC_ID = "0.0.1234189";
 class Resolver {
-    constructor(networkType, authKey = "", cache) {
+    constructor(networkType, authKey = "", cache, resolverOptions) {
         this._isCaughtUpWithTopic = new Map();
         this._subscriptions = [];
         this.isCaughtUpPromise = Promise.resolve();
@@ -23,15 +23,15 @@ class Resolver {
         else {
             this.cache = cache;
         }
-        if (this._options) {
-            this._options = this._options;
+        if (resolverOptions) {
+            this._options = resolverOptions;
         }
     }
     /**
      * @description Initializes all topic subscriptions.
      */
     init() {
-        this._udResolver = new resolution_1.default();
+        this._unstoppableDomainsResolver = new resolution_1.default();
         this.isCaughtUpPromise = this.getTopLevelDomains().then(async () => {
             const promises = [];
             await this.cache.getTlds().then((knownTlds) => {
@@ -54,16 +54,9 @@ class Resolver {
      * @returns {Promise<AccountId>}
      */
     async resolveSLD(domain) {
-        if (await this._udResolver.isSupportedDomain(domain)) {
-            try {
-                const udResult = await this._udResolver.addr(domain, 'HBAR');
-                return udResult;
-            }
-            catch (error) {
-                console.log(error);
-                return Promise.resolve(undefined);
-            }
-        }
+        const isUnstoppableDomain = await this._unstoppableDomainsResolver.isSupportedDomain(domain);
+        if (isUnstoppableDomain)
+            return await this._unstoppableDomainsResolver.addr(domain, 'HBAR');
         const nameHash = (0, hashDomain_1.hashDomain)(domain);
         const sld = await this.getSecondLevelDomain(nameHash);
         if (sld) {
