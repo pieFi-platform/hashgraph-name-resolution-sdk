@@ -1,4 +1,4 @@
-import { Resolution } from "@unstoppabledomains/resolution";
+import udResolution from "@unstoppabledomains/resolution";
 import { hashDomain } from "./hashDomain";
 import { MemoryCache } from "./MemoryCache";
 import { MirrorNode, NetworkType } from "./mirrorNode";
@@ -27,6 +27,7 @@ export class Resolver {
   private _isCaughtUpWithTopic = new Map<string, boolean>();
   private _subscriptions: (() => void)[] = [];
   private cache: ICache;
+  private _udResolver: any;
 
   isCaughtUpPromise: Promise<unknown> = Promise.resolve();
 
@@ -47,6 +48,7 @@ export class Resolver {
    * @description Initializes all topic subscriptions.
    */
   public init() {
+    this._udResolver = new udResolution();
     this.isCaughtUpPromise = this.getTopLevelDomains().then(async () => {
       const promises: Promise<void>[] = [];
 
@@ -73,24 +75,24 @@ export class Resolver {
    * @returns {Promise<AccountId>}
    */
   public async resolveSLD(domain: string): Promise<string | undefined> {
-    const udResolution = new Resolution();
-    const nameHash = hashDomain(domain);
-    const sld = await this.getSecondLevelDomain(nameHash);
-    if (await udResolution.isSupportedDomain(domain)) {
+    if (await this._udResolver.isSupportedDomain(domain)) {
       try {
-      const udResult = await udResolution.addr(domain, 'HBAR')
+      const udResult = await this._udResolver.addr(domain, 'HBAR')
       return udResult;
       } catch (error) {
         console.log(error);
         return Promise.resolve(undefined);
       }
-    } else if (sld) {
+    }
+
+    const nameHash = hashDomain(domain);
+    const sld = await this.getSecondLevelDomain(nameHash);
+    if (sld) {
       const [tokenId, serial] = sld.nftId.split(":");
       const nft = await this.mirrorNode.getNFT(tokenId, serial);
       return nft.account_id;
-    } else {
-      return Promise.resolve(undefined);
     }
+    return Promise.resolve(undefined);
   }
 
   public async getAllDomainsForAccount(accountIdOrDomain: string): Promise<string[]> {

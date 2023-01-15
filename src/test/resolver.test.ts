@@ -1,6 +1,16 @@
 import { Resolver } from "..";
 
 jest.setTimeout(60 * 1000);
+test('Unstoppable Domain resolves to an address', async () => {
+  const resolver = new Resolver('hedera_main');
+  resolver.init();
+  const result = await resolver.resolveSLD('aaronquirk.x');
+  console.log(result);
+  await resolver.dispose();
+  expect(result).toBeTruthy();
+});
+
+
 test('.cream name resolves to an address', async () => {
   const resolver = new Resolver('hedera_main');
   resolver.init();
