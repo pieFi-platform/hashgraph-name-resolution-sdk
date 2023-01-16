@@ -54,9 +54,10 @@ class Resolver {
      * @returns {Promise<AccountId>}
      */
     async resolveSLD(domain) {
-        const isUnstoppableDomain = await this._unstoppableDomainsResolver.isSupportedDomain(domain);
+        var _a, _b;
+        const isUnstoppableDomain = await ((_a = this._unstoppableDomainsResolver) === null || _a === void 0 ? void 0 : _a.isSupportedDomain(domain));
         if (isUnstoppableDomain)
-            return await this._unstoppableDomainsResolver.addr(domain, 'HBAR');
+            return await ((_b = this._unstoppableDomainsResolver) === null || _b === void 0 ? void 0 : _b.addr(domain, 'HBAR'));
         const nameHash = (0, hashDomain_1.hashDomain)(domain);
         const sld = await this.getSecondLevelDomain(nameHash);
         if (sld) {
