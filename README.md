@@ -22,3 +22,7 @@ Currently Supported Service Types: The values
     hedera_test, hedera_main, lworks_test, lworks_main, arkhia_test, arkhia_main
 
 are currently supported by this SDK.
+
+Unstoppable Domain Resolution Example:
+
+    const accountId =  await resolver.resolveUnstoppableDomain('jim-unstoppable.crypto');

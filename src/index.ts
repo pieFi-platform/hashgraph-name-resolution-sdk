@@ -1,3 +1,4 @@
+import unstoppableDomainsResolution from "@unstoppabledomains/resolution";
 import { hashDomain } from "./hashDomain";
 import { MemoryCache } from "./MemoryCache";
 import { MirrorNode, NetworkType } from "./mirrorNode";
@@ -26,10 +27,11 @@ export class Resolver {
   private _isCaughtUpWithTopic = new Map<string, boolean>();
   private _subscriptions: (() => void)[] = [];
   private cache: ICache;
+  private _unstoppableDomainsResolver: any;
 
   isCaughtUpPromise: Promise<unknown> = Promise.resolve();
 
-  constructor(networkType: NetworkType, authKey = "", cache?: ICache) {
+  constructor(networkType: NetworkType, authKey = "", cache?: ICache, resolverOptions?: ResolverOptions) {
     this.mirrorNode = new MirrorNode(networkType, authKey);
     if (!cache) {
       this.cache = new MemoryCache();
@@ -37,8 +39,8 @@ export class Resolver {
       this.cache = cache;
     }
 
-    if (options) {
-      this._options = options;
+    if (resolverOptions) {
+      this._options = resolverOptions;
     }
   }
 
@@ -46,6 +48,7 @@ export class Resolver {
    * @description Initializes all topic subscriptions.
    */
   public init() {
+    this._unstoppableDomainsResolver = new unstoppableDomainsResolution();
     this.isCaughtUpPromise = this.getTopLevelDomains().then(async () => {
       const promises: Promise<void>[] = [];
 
@@ -72,15 +75,17 @@ export class Resolver {
    * @returns {Promise<AccountId>}
    */
   public async resolveSLD(domain: string): Promise<string | undefined> {
+    const isUnstoppableDomain = await this._unstoppableDomainsResolver?.isSupportedDomain(domain);
+    if (isUnstoppableDomain) return await this._unstoppableDomainsResolver?.addr(domain, 'HBAR');
+
     const nameHash = hashDomain(domain);
     const sld = await this.getSecondLevelDomain(nameHash);
     if (sld) {
       const [tokenId, serial] = sld.nftId.split(":");
       const nft = await this.mirrorNode.getNFT(tokenId, serial);
       return nft.account_id;
-    } else {
-      return Promise.resolve(undefined);
     }
+    return Promise.resolve(undefined);
   }
 
   public async getAllDomainsForAccount(accountIdOrDomain: string): Promise<string[]> {
@@ -237,8 +242,7 @@ export class Resolver {
     }
 
     throw new Error(
-      `SLD message for:[${
-        nameHash.domain
+      `SLD message for:[${nameHash.domain
       }] not found on topic:[${tld.topicId.toString()}]`
     );
   }

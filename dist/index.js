@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Resolver = exports.MAIN_TLD_TOPIC_ID = exports.TEST_TLD_TOPIC_ID = void 0;
+const resolution_1 = __importDefault(require("@unstoppabledomains/resolution"));
 const hashDomain_1 = require("./hashDomain");
 const MemoryCache_1 = require("./MemoryCache");
 const mirrorNode_1 = require("./mirrorNode");
@@ -8,7 +12,7 @@ const pollingTopicSubscriber_1 = require("./topicSubscriber/pollingTopicSubscrib
 exports.TEST_TLD_TOPIC_ID = "0.0.48097305";
 exports.MAIN_TLD_TOPIC_ID = "0.0.1234189";
 class Resolver {
-    constructor(networkType, authKey = "", cache, options) {
+    constructor(networkType, authKey = "", cache, resolverOptions) {
         this._isCaughtUpWithTopic = new Map();
         this._subscriptions = [];
         this.isCaughtUpPromise = Promise.resolve();
@@ -19,14 +23,15 @@ class Resolver {
         else {
             this.cache = cache;
         }
-        if (options) {
-            this._options = options;
+        if (resolverOptions) {
+            this._options = resolverOptions;
         }
     }
     /**
      * @description Initializes all topic subscriptions.
      */
     init() {
+        this._unstoppableDomainsResolver = new resolution_1.default();
         this.isCaughtUpPromise = this.getTopLevelDomains().then(async () => {
             const promises = [];
             await this.cache.getTlds().then((knownTlds) => {
@@ -49,6 +54,10 @@ class Resolver {
      * @returns {Promise<AccountId>}
      */
     async resolveSLD(domain) {
+        var _a, _b;
+        const isUnstoppableDomain = await ((_a = this._unstoppableDomainsResolver) === null || _a === void 0 ? void 0 : _a.isSupportedDomain(domain));
+        if (isUnstoppableDomain)
+            return await ((_b = this._unstoppableDomainsResolver) === null || _b === void 0 ? void 0 : _b.addr(domain, 'HBAR'));
         const nameHash = (0, hashDomain_1.hashDomain)(domain);
         const sld = await this.getSecondLevelDomain(nameHash);
         if (sld) {
@@ -56,9 +65,7 @@ class Resolver {
             const nft = await this.mirrorNode.getNFT(tokenId, serial);
             return nft.account_id;
         }
-        else {
-            return Promise.resolve(undefined);
-        }
+        return Promise.resolve(undefined);
     }
     async getAllDomainsForAccount(accountIdOrDomain) {
         let accountId = accountIdOrDomain;
