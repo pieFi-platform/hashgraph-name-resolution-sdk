@@ -80,8 +80,8 @@ export class Resolver {
    * @returns {Promise<AccountId>}
    */
   public async resolveSLD(domain: string): Promise<string | undefined> {
-    const isUnstoppableDomain = await this._unstoppableDomainsResolver?.isSupportedDomain(domain);
-    if (isUnstoppableDomain) return await this._unstoppableDomainsResolver?.addr(domain, 'HBAR');
+    // const isUnstoppableDomain = await this._unstoppableDomainsResolver?.isSupportedDomain(domain);
+    // if (isUnstoppableDomain) return await this._unstoppableDomainsResolver?.addr(domain, 'HBAR');
 
     const nameHash = hashDomain(domain);
     const domainTopicMessage = await this.getSldTopicMessage(nameHash);
@@ -100,28 +100,40 @@ export class Resolver {
     // return Promise.resolve(undefined);
   }
 
-  public async getAllDomainsForAccount(accountIdOrDomain: string): Promise<string[]> {
-    let accountId = accountIdOrDomain;
-    if (!accountIdOrDomain.startsWith('0.0.')) {
-      const accountIdFromDomain = await this.resolveSLD(accountIdOrDomain);
-      if (accountIdFromDomain) {
-        accountId = accountIdFromDomain;
-      } else {
-        return [];
-      }
+  public async getAllDomainsForAccount(accountId: string): Promise<string[]> {
+    // let accountId = accountIdOrDomain;
+    // if (!accountIdOrDomain.startsWith('0.0.')) {
+    //   const accountIdFromDomain = await this.resolveSLD(accountIdOrDomain);
+    //   if (accountIdFromDomain) {
+    //     accountId = accountIdFromDomain;
+    //   } else {
+    //     return [];
+    //   }
+    // }
+
+    const topicMessages = await this.mirrorNode.getTldTopicMessage();
+    const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
+    const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
+    const final = [];
+    for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
+      const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
+      const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
+      if (checkAccountId === accountId && Boolean(checkAccountId)) { final.push(currMsgInfo.nameHash.domain); }
     }
 
-    const tokenIds = await this.cache.getTokenIds();
-    if (tokenIds.length === 0) {
-      return [];
-    }
+    return final;
 
-    const nftInfos = await Promise.all(tokenIds.map((tokenId) => this.mirrorNode.getNFTsByAccountId(tokenId, accountId)));
+    // const tokenIds = await this.cache.getTokenIds();
+    // if (tokenIds.length === 0) {
+    //   return [];
+    // }
 
-    const slds = await Promise.all(nftInfos
-      .flat()
-      .map((o) => this.cache.getSldByNftId(`${o.token_id}:${o.serial_number}`)));
-    return (slds.filter((sld) => sld !== undefined) as SecondLevelDomain[]).map((sld) => sld.nameHash.domain);
+    // const nftInfos = await Promise.all(tokenIds.map((tokenId) => this.mirrorNode.getNFTsByAccountId(tokenId, accountId)));
+
+    // const slds = await Promise.all(nftInfos
+    //   .flat()
+    //   .map((o) => this.cache.getSldByNftId(`${o.token_id}:${o.serial_number}`)));
+    // return (slds.filter((sld) => sld !== undefined) as SecondLevelDomain[]).map((sld) => sld.nameHash.domain);
   }
 
   // Private

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MirrorNode = exports.MAX_PAGE_SIZE = exports.getBaseUrl = exports.NetworkBaseURL = void 0;
 const axios_1 = __importDefault(require("axios"));
 const _1 = require(".");
+const DOMAINS = ['hbar', 'boo', 'cream'];
 var NetworkBaseURL;
 (function (NetworkBaseURL) {
     NetworkBaseURL["hedera_test"] = "https://testnet.mirrornode.hedera.com";
@@ -77,6 +78,58 @@ class MirrorNode {
         const res = await this.sendGetRequest(url);
         return res.data.evm_address;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async getNftTopicMessages(topicMessages, userNftLists) {
+        const nftDataMessages = [];
+        for (let index = 0; index < topicMessages.length; index += 1) {
+            const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${topicMessages[index].topicId}/messages`;
+            // eslint-disable-next-line no-await-in-loop
+            const mainTopicMessages = await this.sendGetRequest(urlTopicManger);
+            const filteredData = mainTopicMessages.data.messages.filter((x) => {
+                const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+                return userNftLists.some((y) => currMsgInfo.nftId === `${y.token_id}:${y.serial_number}`);
+            });
+            nftDataMessages.push(...filteredData);
+            if (mainTopicMessages.data.links.next) {
+                // eslint-disable-next-line no-await-in-loop
+                const nextCall = await this.nextApiCallTopics(mainTopicMessages.data.links.next);
+                const nextData = nextCall.filter((x) => {
+                    const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+                    return userNftLists.some((y) => currMsgInfo.nftId === `${y.token_id}:${y.serial_number}`);
+                });
+                nftDataMessages.push(...nextData);
+            }
+            if (nftDataMessages.length === userNftLists.length)
+                break;
+        }
+        return nftDataMessages;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async getAllUserHNSNfts(topicMessages, accountId) {
+        const nftList = [];
+        for (let index = 0; index < topicMessages.length; index += 1) {
+            const nftEndpoint = `${this.getBaseUrl()}/api/v1/tokens/${topicMessages[index].tokenId}/nfts?account.id=${accountId}`;
+            // eslint-disable-next-line no-await-in-loop
+            const nftData = await this.sendGetRequest(nftEndpoint);
+            nftList.push(...nftData.data.nfts);
+            if (nftData.data.links.next !== null) {
+                // eslint-disable-next-line no-await-in-loop
+                const nextCall = await this.nextApiCall(nftData.data.links.next);
+                nftList.push(...nextCall.nfts);
+            }
+        }
+        return nftList;
+    }
+    async getTldTopicMessage() {
+        const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${_1.MAIN_TLD_TOPIC_ID}/messages`;
+        const res = await this.sendGetRequest(urlTopicManger);
+        const { messages } = res.data;
+        const topicMessages = messages.map((x) => {
+            const decoded = Buffer.from(x.message, 'base64').toString();
+            return JSON.parse(decoded);
+        }).filter((x) => DOMAINS.find((y) => y === x.nameHash.domain));
+        return topicMessages;
+    }
     // Private
     getBaseUrl() {
         return (0, exports.getBaseUrl)(this.networkType);
@@ -90,17 +143,32 @@ class MirrorNode {
     }
     async sendGetRequest(url) {
         const AUTH_HEADERS = this.buildAuthHeaders(this.authHeader, this.authKey);
+        const headers = this.networkType === 'arkhia_main' ? { ...AUTH_HEADERS } : { Authorization: this.authKey };
         try {
             const res = await axios_1.default.get(url, {
-                headers: {
-                    ...AUTH_HEADERS,
-                },
+                headers,
             });
             return res;
         }
         catch (err) {
             throw new Error('Get Request Failed');
         }
+    }
+    async nextApiCall(url) {
+        const nextUrl = `${this.getBaseUrl()}${url}`;
+        const nextData = await this.sendGetRequest(nextUrl);
+        if (nextData.data.links.next !== null) {
+            return nextData.data.concat(await this.nextApiCall(nextData.data.links.next));
+        }
+        return nextData.data;
+    }
+    async nextApiCallTopics(url) {
+        const nextUrl = `${this.getBaseUrl()}${url}`;
+        const nextData = await this.sendGetRequest(nextUrl);
+        if (nextData.data.links.next !== null) {
+            return nextData.data.messages.concat(await this.nextApiCallTopics(nextData.data.links.next));
+        }
+        return nextData.data.messages;
     }
 }
 exports.MirrorNode = MirrorNode;
