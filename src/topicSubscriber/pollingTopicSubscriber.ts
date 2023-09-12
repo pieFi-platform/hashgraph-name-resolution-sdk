@@ -21,7 +21,7 @@ export const executeWithRetriesAsync = async <T>(func: (retryNum: number) => Pro
   throw new Error('Reached maximum retries and did not rethrow error... Should not have gotten here.');
 };
 
-const sendGetRequest = async (url: string, authKey?: string, authHeader = '') => executeWithRetriesAsync(async (retryNum) => {
+const sendGetRequest = async (url: string, authKey?: string, authHeader = '', networkType:string) => executeWithRetriesAsync(async (retryNum) => {
   // Backoff retry for each failed attempt
   await new Promise((resolve) => setTimeout(resolve, retryNum * 250));
 
@@ -30,9 +30,9 @@ const sendGetRequest = async (url: string, authKey?: string, authHeader = '') =>
     headers.Authorization = authKey;
   }
 
-  const res = await axios.get(url, {
+  const res = networkType === 'arkhia_main' ? await axios.get(url, {
     headers: { [authHeader]: authKey },
-  });
+  }) : await axios.get(url);
 
   return res.data as MessagesResponse;
 }, () => true);

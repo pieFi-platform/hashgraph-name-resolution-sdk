@@ -23,16 +23,16 @@ const executeWithRetriesAsync = async (func, shouldRetry, maxRetries = 5) => {
     throw new Error('Reached maximum retries and did not rethrow error... Should not have gotten here.');
 };
 exports.executeWithRetriesAsync = executeWithRetriesAsync;
-const sendGetRequest = async (url, authKey, authHeader = '') => (0, exports.executeWithRetriesAsync)(async (retryNum) => {
+const sendGetRequest = async (url, authKey, authHeader = '', networkType) => (0, exports.executeWithRetriesAsync)(async (retryNum) => {
     // Backoff retry for each failed attempt
     await new Promise((resolve) => setTimeout(resolve, retryNum * 250));
     const headers = {};
     if (authKey) {
         headers.Authorization = authKey;
     }
-    const res = await axios_1.default.get(url, {
+    const res = networkType === 'arkhia_main' ? await axios_1.default.get(url, {
         headers: { [authHeader]: authKey },
-    });
+    }) : await axios_1.default.get(url);
     return res.data;
 }, () => true);
 class PollingTopicSubscriber {

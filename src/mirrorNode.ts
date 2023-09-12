@@ -175,12 +175,9 @@ export class MirrorNode {
 
   private async sendGetRequest(url: string): Promise<AxiosResponse> {
     const AUTH_HEADERS = this.buildAuthHeaders(this.authHeader, this.authKey);
-    const headers = this.networkType === 'arkhia_main' ? { ...AUTH_HEADERS } : { Authorization: this.authKey };
 
     try {
-      const res = await axios.get(url, {
-        headers,
-      });
+      const res = this.networkType === 'arkhia_main' ? await axios.get(url, { headers: { ...AUTH_HEADERS } }) : await axios.get(url);
 
       return res;
     } catch (err) {
