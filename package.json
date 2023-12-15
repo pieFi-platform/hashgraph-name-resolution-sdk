@@ -39,7 +39,7 @@
   "dependencies": {
     "@hashgraph/sdk": "^2.19.1",
     "@unstoppabledomains/resolution": "^8.3.3",
-    "axios": "^1.2.2",
+    "axios": "^1.6.2",
     "keccak256": "^1.0.6",
     "web3": "^1.8.1"
   }
